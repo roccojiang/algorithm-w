@@ -3,7 +3,8 @@ import Expr._
 import Subst._
 import Inference._
 
-@main def hello: Unit =
+@main def playground: Unit =
+  val f: EVar = EVar("f")
   val x: EVar = EVar("x")
   val y: EVar = EVar("y")
   val z: EVar = EVar("z")
@@ -15,9 +16,10 @@ import Inference._
   val SK = EApp(S, K)
   val SKI = EApp(EApp(S, K), I)
 
-  val xx = EApp(x, x)
+  val p = EAbs(x, EApp(f, EApp(x, x)))
+  val Y = EAbs(f, EApp(p, p))
 
   println(s"$S: ${pp(S)}")
   println(s"$SK: ${pp(SK)}")
   println(s"$SKI: ${pp(SKI)}")
-  println(s"$xx, ${pp(xx)}")
+  println(s"$Y: ${pp(Y)}")
