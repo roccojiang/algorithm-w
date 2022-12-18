@@ -1,5 +1,6 @@
-import Type._
-import Expr._
+import core._
+import core.BasicType._
+import core.Expr._
 
 class Inference:
   private var n: Int = 0
@@ -11,9 +12,11 @@ class Inference:
 object Inference:
   def unify(t1: Type, t2: Type): Either[String, Subst] =
     (t1, t2) match
-      case (phi @ TVar(x), TVar(y)) if x == y   => Right(Subst(phi -> phi))
-      case (phi @ TVar(x), b) if !b.occurs(phi) => Right(Subst(phi -> b))
-      case (a, phi @ TVar(x))                   => unify(phi, a)
+      case (phi @ TVar(x), TVar(y)) if x == y => Right(Subst(phi -> phi))
+      // TODO: does b have to be a basic type?
+      case (phi @ TVar(x), b: BasicType) if !b.occurs(phi) =>
+        Right(Subst(phi -> b))
+      case (a, phi @ TVar(x)) => unify(phi, a)
       case (TArr(a, b), TArr(c, d)) =>
         for
           s1 <- unify(a, c)
@@ -32,11 +35,11 @@ object Inference:
         yield s2 compose s1
       else unifyContexts(c1.tail, c2)
 
-  def pp(e: Expr): Either[String, (Context, Type)] =
+  def pp(e: Expr): Either[String, (Context, BasicType)] =
 
     def ppHelper(e: Expr)(using
         inferenceAlg: Inference
-    ): Either[String, (Context, Type)] = e match
+    ): Either[String, (Context, BasicType)] = e match
       case v @ EVar(x) =>
         val phi = inferenceAlg.fresh()
         Right(Map(v -> phi), phi)
@@ -50,6 +53,14 @@ object Inference:
             (pi.removed(x), TArr(a, p))
           else (pi, TArr(phi, p))
         )
+      // for
+      //   pp <- ppHelper(e)
+      //   (pi, p) = pp
+
+      //   test =
+      //     if pi.contains(x) then (pi.removed(x), TArr(pi(x), p))
+      //     else (pi, TArr(phi, p))
+      // yield test
 
       case EApp(e1, e2) =>
         val phi = inferenceAlg.fresh()

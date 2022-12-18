@@ -1,3 +1,5 @@
+package core
+
 enum Expr:
   case EVar(x: String)
   case EAbs(x: EVar, e: Expr)

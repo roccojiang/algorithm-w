@@ -1,6 +1,6 @@
-import Type._
-import Expr._
-import Subst._
+import core._
+import core.BasicType._
+import core.Expr._
 import Inference._
 
 @main def playground: Unit =
@@ -23,3 +23,8 @@ import Inference._
   println(s"$SK: ${pp(SK)}")
   println(s"$SKI: ${pp(SKI)}")
   println(s"$Y: ${pp(Y)}")
+
+  val p1: TVar = TVar(1)
+  val p2: TVar = TVar(2)
+  val test = pp(SKI)
+  println(PolymorphicType(Set(p1, p2), pp(SKI).getOrElse(null)._2))
