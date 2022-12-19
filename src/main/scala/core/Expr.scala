@@ -5,7 +5,7 @@ enum Expr:
   case EAbs(x: EVar, e: Expr)
   case EApp(e1: Expr, e2: Expr)
 
-  override def toString(): String =
+  override def toString: String =
     def exprToString(e: Expr): String = e match
       case EAbs(EVar(x), e) => s"λ$x${absExprToString(e)}"
       case e                => appExprToString(e)
