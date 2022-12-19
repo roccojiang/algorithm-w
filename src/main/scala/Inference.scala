@@ -38,20 +38,28 @@ object Inference:
   def algW(context: Context, e: Expr): Either[String, (Subst, TBasic)] =
 
     def instantiate(t: Type)(using i: Inference): TBasic = t match
-      case TPoly(quantified, a) =>
-        val s = Subst(quantified.map(_ -> i.fresh).toMap)
+      case TPoly(vars, a) =>
+        val s = Subst(vars.map(_ -> i.fresh).toMap)
         s(a)
       case t: TBasic => t
+
+    def generalise(context: Context, t: TBasic)(using i: Inference): TPoly =
+      val vars = t.fv diff context.values.collect { case phi: TVar =>
+        phi
+      }.toSet
+      TPoly(vars, t)
 
     def algWHelper(context: Context, e: Expr)(using
         i: Inference
     ): Either[String, (Subst, TBasic)] =
       e match
         case x: EVar =>
+          println(s"evar $x: $context")
           if context.contains(x) then Right(Subst.id, instantiate(context(x)))
           else Left(s"$x not bound in $context")
 
         case EAbs(x, e) =>
+          println(s"eabs ${EAbs(x,e)}: $context")
           val phi = i.fresh
           for
             pp <- algWHelper(context ++ Map(x -> phi), e)
@@ -59,6 +67,7 @@ object Inference:
           yield (s, s(TArr(phi, a)))
 
         case EApp(e1, e2) =>
+          println(s"eapp ${EApp(e1,e2)}: $context")
           val phi = i.fresh
           for
             pp1 <- algWHelper(context, e1)
@@ -68,8 +77,27 @@ object Inference:
             (s2, b) = pp2
             // _ = println(s"    pp $e2: $pp2")
             s3 <- unify(s2(a), TArr(b, phi))
-            // _ = println(s"    pp ${EApp(e1,e2)}: ${(s3 compose s2 compose s1, s3(phi))}")
+          // _ = println(s"    pp ${EApp(e1,e2)}: ${(s3 compose s2 compose s1, s3(phi))}")
           yield (s3 compose s2 compose s1, s3(phi))
+
+        case EFix(g, e) =>
+          println(s"efix ${EFix(g,e)}: $context")
+          val phi = i.fresh
+          for
+            pp <- algWHelper(context ++ Map(g -> phi), e)
+            (s1, a) = pp
+            s2 <- unify(s1(phi), a)
+          yield (s2 compose s1, s2(a))
+
+        case ELet(x, e1, e2) =>
+          println(s"elet ${ELet(x,e1,e2)}: $context")
+          for
+            pp1 <- algWHelper(context, e1)
+            (s1, a) = pp1
+            sigma = generalise(s1(context), a)
+            pp2 <- algWHelper(s1(context ++ Map(x -> sigma)), e2)
+            (s2, b) = pp2
+          yield (s2 compose s1, b)
 
     given Inference = new Inference()
     algWHelper(context, e)

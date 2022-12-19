@@ -19,8 +19,8 @@ case class Subst(subMap: Map[Type, TBasic]):
     case a TArr b  => TArr(apply(a), apply(b))
 
   def apply(t: TPoly): TPoly =
-    val TPoly(quantified, a) = t
-    TPoly(quantified, apply(a))
+    val TPoly(vars, a) = t
+    TPoly(vars, apply(a))
 
   // def apply(t: Type): Type =
   //   def applyBasic(t: TBasic): TBasic = t match
@@ -28,7 +28,7 @@ case class Subst(subMap: Map[Type, TBasic]):
   //     case a TArr b  => TArr(applyBasic(a), applyBasic(b))
 
   //   t match
-  //     case TPoly(quantified, t) => TPoly(quantified, applyBasic(t))
+  //     case TPoly(vars, t) => TPoly(vars, applyBasic(t))
   //     case t: TBasic            => applyBasic(t)
 
   def apply(c: Context): Context = c.map((x, a) => x -> apply(a))

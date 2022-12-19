@@ -17,7 +17,7 @@ enum Expr:
       case e                             => s".$e"
 
     def fixStr(e: Expr): String = e match
-      case EFix(g, e) => s"fix $g. $e}"
+      case EFix(g, e) => s"fix $g. $e"
       case e          => letStr(e)
 
     def letStr(e: Expr): String = e match
