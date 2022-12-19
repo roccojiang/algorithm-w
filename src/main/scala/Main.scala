@@ -19,14 +19,15 @@ import Inference._
   val p = EAbs(x, EApp(f, EApp(x, x)))
   val Y = EAbs(f, EApp(p, p))
 
-  println(infer(I))
-  println(infer(K))
-  println(infer(S))
+  println(s"$S: ${infer(S)}")
+  println(s"$SK: ${infer(SK)}")
+  println(s"$SKI: ${infer(SKI)}")
+  println(s"$Y: ${infer(Y)}")
 
-  // println(s"$S: ${pp(S)}")
-  // println(s"$SK: ${pp(SK)}")
-  // println(s"$SKI: ${pp(SKI)}")
-  // println(s"$Y: ${pp(Y)}")
+  // test pretty printing of expressions
+  // println(ELet(EVar("foo"), EFix(f, Y), ELet(EVar("bar"), S, EFix(f, ELet(EVar("baz"), x, x)))))
+  // println(EApp(x, ELet(EVar("foo"), x, x)))
+  // println(EApp(x, EFix(f, p)))
 
   // val p1: TVar = TVar(1)
   // val p2: TVar = TVar(2)

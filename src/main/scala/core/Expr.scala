@@ -4,23 +4,34 @@ enum Expr:
   case EVar(x: String)
   case EAbs(x: EVar, e: Expr)
   case EApp(e1: Expr, e2: Expr)
+  case ELet(x: EVar, e1: Expr, e2: Expr)
+  case EFix(g: EVar, e: Expr)
 
+  // TODO: make this less confusing, and reconsider redundant parenthesis rules
+  // on let and fix
   override def toString: String =
-    def exprToString(e: Expr): String = e match
-      case EAbs(EVar(x), e) => s"λ$x${absExprToString(e)}"
-      case e                => appExprToString(e)
+    // Abbreviates consecutive abstractions
+    def absStr(e: Expr): String = e match
+      case EAbs(EVar(x), e @ EAbs(_, _)) => s"$x${absStr(e)}"
+      case EAbs(EVar(x), e)              => s"$x.$e"
+      case e                             => s".$e"
 
-    def absExprToString(e: Expr): String = e match
-      case EAbs(EVar(x), e @ EAbs(_, _)) => s"$x${absExprToString(e)}"
-      case EAbs(EVar(x), e)              => s"$x.${exprToString(e)}"
-      case e                             => s".${exprToString(e)}"
+    def fixStr(e: Expr): String = e match
+      case EFix(g, e) => s"fix $g. $e}"
+      case e          => letStr(e)
 
-    def appExprToString(e: Expr): String = e match
-      case EApp(e1, e2) => s"${appExprToString(e1)}${varExprToString(e2)}"
-      case e            => varExprToString(e)
+    def letStr(e: Expr): String = e match
+      case ELet(x, e1, e2) => s"let $x = ${appStr(e1)} in ${appStr(e2)}"
+      case e               => appStr(e)
 
-    def varExprToString(e: Expr): String = e match
+    def appStr(e: Expr): String = e match
+      case EApp(e1, e2) => s"${appStr(e1)}${varStr(e2)}"
+      case e            => varStr(e)
+
+    def varStr(e: Expr): String = e match
       case EVar(x) => x
-      case e       => s"(${exprToString(e)})"
+      case e       => s"($e)"
 
-    exprToString(this)
+    this match
+      case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
+      case e                => fixStr(e)
