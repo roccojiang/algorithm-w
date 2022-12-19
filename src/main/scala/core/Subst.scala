@@ -37,7 +37,11 @@ case class Subst(subMap: Map[Type, TBasic]):
     val (c, t) = pp
     (apply(c), apply(t))
 
-  def compose(s: Subst): Subst = Subst(subMap ++ s.subMap)
+  def apply(subst: Subst)(t: Type): Type = apply(subst(t))
+
+  def compose(s2: Subst): Subst =
+    val s1 = this
+    Subst(s2.subMap.mapValues(s1.apply(_)).toMap ++ s1.subMap)
 
 object Subst:
   def apply(sub: (Type, TBasic)): Subst = Subst(Map(sub))
