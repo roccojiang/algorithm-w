@@ -58,52 +58,24 @@ object Inference:
             (s, a) = pp
           yield (s, s(TArr(phi, a)))
 
-        case EApp(e1, e2) => ???
+        case EApp(e1, e2) =>
+          val phi = i.fresh
+          for
+            pp1 <- algWHelper(context, e1)
+            (s1, a) = pp1
+            // _ = println(s"    pp $e1: $pp1")
+            pp2 <- algWHelper(s1(context), e2)
+            (s2, b) = pp2
+            // _ = println(s"    pp $e2: $pp2")
+            s3 <- unify(s2(a), TArr(b, phi))
+            // _ = println(s"    pp ${EApp(e1,e2)}: ${(s3 compose s2 compose s1, s3(phi))}")
+          yield (s3 compose s2 compose s1, s3(phi))
 
     given Inference = new Inference()
     algWHelper(context, e)
 
-  def infer(e: Expr): Either[String, (Subst, TBasic)] = algW(Map.empty, e)
-
-  // def pp(e: Expr): Either[String, (Context, TBasic)] =
-
-  //   def ppHelper(e: Expr)(using
-  //       inferenceAlg: Inference
-  //   ): Either[String, (Context, TBasic)] = e match
-  //     case v @ EVar(x) =>
-  //       val phi = inferenceAlg.fresh()
-  //       Right(Map(v -> phi), phi)
-
-  //     case EAbs(x, e) =>
-  //       val phi = inferenceAlg.fresh()
-
-  //       ppHelper(e).map((pi, p) =>
-  //         if pi.contains(x) then
-  //           val a = pi(x)
-  //           (pi.removed(x), TArr(a, p))
-  //         else (pi, TArr(phi, p))
-  //       )
-  //     // for
-  //     //   pp <- ppHelper(e)
-  //     //   (pi, p) = pp
-
-  //     //   test =
-  //     //     if pi.contains(x) then (pi.removed(x), TArr(pi(x), p))
-  //     //     else (pi, TArr(phi, p))
-  //     // yield test
-
-  //     case EApp(e1, e2) =>
-  //       val phi = inferenceAlg.fresh()
-
-  //       for
-  //         pp1 <- ppHelper(e1)
-  //         pp2 <- ppHelper(e2)
-  //         (pi1, p1) = pp1
-  //         (pi2, p2) = pp2
-
-  //         s1 <- unify(p1, TArr(p2, phi))
-  //         s2 <- unifyContexts(s1(pi1), s1(pi2))
-  //       yield (s2 compose s1)(pi1 ++ pi2, phi)
-
-  //   given Inference = new Inference()
-  //   ppHelper(e)
+  def infer(e: Expr): Either[String, TBasic] =
+    for
+      pp <- algW(Map.empty, e)
+      (s, a) = pp
+    yield s(a)

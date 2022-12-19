@@ -20,6 +20,8 @@ import Inference._
   val Y = EAbs(f, EApp(p, p))
 
   println(infer(I))
+  println(infer(K))
+  println(infer(S))
 
   // println(s"$S: ${pp(S)}")
   // println(s"$SK: ${pp(SK)}")
