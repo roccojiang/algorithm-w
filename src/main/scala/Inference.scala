@@ -58,50 +58,42 @@ object Inference:
     ): Either[String, (Subst, TBasic)] =
       e match
         case x: EVar =>
-          println(s"evar $x; $context; ")
-          if context.contains(x) then Right(debugPrint(Subst.id, instantiate(context(x))))
+          if context.contains(x) then Right(Subst.id, instantiate(context(x)))
           else Left(s"$x not bound in $context")
 
         case EAbs(x, e) =>
-          println(s"eabs ${EAbs(x,e)}; $context; ")
           val phi = i.fresh
           for
             pp <- algWHelper(context ++ Map(x -> phi), e)
             (s, a) = pp
-          yield debugPrint(s, s(TArr(phi, a)))
+          yield (s, s(TArr(phi, a)))
 
         case EApp(e1, e2) =>
-          println(s"eapp ${EApp(e1,e2)}; $context; ")
           val phi = i.fresh
           for
             pp1 <- algWHelper(context, e1)
             (s1, a) = pp1
-            // _ = println(s"    pp $e1: $pp1")
             pp2 <- algWHelper(s1(context), e2)
             (s2, b) = pp2
-            // _ = println(s"    pp $e2: $pp2")
             s3 <- unify(s2(a), TArr(b, phi))
-          // _ = println(s"    pp ${EApp(e1,e2)}: ${(s3 compose s2 compose s1, s3(phi))}")
-          yield debugPrint(s3 compose s2 compose s1, s3(phi))
+          yield (s3 compose s2 compose s1, s3(phi))
 
         case EFix(g, e) =>
-          println(s"efix ${EFix(g,e)}; $context; ")
           val phi = i.fresh
           for
             pp <- algWHelper(context ++ Map(g -> phi), e)
             (s1, a) = pp
             s2 <- unify(s1(phi), a)
-          yield debugPrint(s2 compose s1, s2(a))
+          yield (s2 compose s1, s2(a))
 
         case ELet(x, e1, e2) =>
-          println(s"elet ${ELet(x,e1,e2)}; $context; ")
           for
             pp1 <- algWHelper(context, e1)
             (s1, a) = pp1
             sigma = generalise(s1(context), a)
             pp2 <- algWHelper(s1(context ++ Map(x -> sigma)), e2)
             (s2, b) = pp2
-          yield debugPrint(s2 compose s1, b)
+          yield (s2 compose s1, b)
 
     given Inference = new Inference()
     algWHelper(context, e)

@@ -22,15 +22,6 @@ case class Subst(subMap: Map[Type, TBasic]):
     val TPoly(vars, a) = t
     TPoly(vars, apply(a))
 
-  // def apply(t: Type): Type =
-  //   def applyBasic(t: TBasic): TBasic = t match
-  //     case phi: TVar => subMap.getOrElse(phi, phi)
-  //     case a TArr b  => TArr(applyBasic(a), applyBasic(b))
-
-  //   t match
-  //     case TPoly(vars, t) => TPoly(vars, applyBasic(t))
-  //     case t: TBasic            => applyBasic(t)
-
   def apply(c: Context): Context = c.map((x, a) => x -> apply(a))
 
   def apply(pp: (Context, Type)): (Context, Type) =
@@ -41,7 +32,7 @@ case class Subst(subMap: Map[Type, TBasic]):
 
   def compose(s2: Subst): Subst =
     val s1 = this
-    Subst(s2.subMap.mapValues(s1.apply(_)).toMap ++ s1.subMap)
+    Subst(s1.subMap ++ s2.subMap.mapValues(s1(_)).toMap)
 
 object Subst:
   def apply(sub: (Type, TBasic)): Subst = Subst(Map(sub))
