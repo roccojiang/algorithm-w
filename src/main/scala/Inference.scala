@@ -1,19 +1,22 @@
-import Type._
-import Expr._
+import core._
+import core.TBasic._
+import core.Expr._
 
 class Inference:
   private var n: Int = 0
 
-  def fresh(): TVar =
+  def fresh: TVar =
     n += 1
     TVar(n)
 
 object Inference:
   def unify(t1: Type, t2: Type): Either[String, Subst] =
     (t1, t2) match
-      case (phi @ TVar(x), TVar(y)) if x == y   => Right(Subst(phi -> phi))
-      case (phi @ TVar(x), b) if !b.occurs(phi) => Right(Subst(phi -> b))
-      case (a, phi @ TVar(x))                   => unify(phi, a)
+      case (phi @ TVar(x), TVar(y)) if x == y => Right(Subst(phi -> phi))
+      // TODO: does b have to be a basic type?
+      case (phi @ TVar(x), b: TBasic) if !b.occurs(phi) =>
+        Right(Subst(phi -> b))
+      case (a, phi @ TVar(x)) => unify(phi, a)
       case (TArr(a, b), TArr(c, d)) =>
         for
           s1 <- unify(a, c)
@@ -32,37 +35,71 @@ object Inference:
         yield s2 compose s1
       else unifyContexts(c1.tail, c2)
 
-  def pp(e: Expr): Either[String, (Context, Type)] =
+  def algW(context: Context, e: Expr): Either[String, (Subst, TBasic)] =
 
-    def ppHelper(e: Expr)(using
-        inferenceAlg: Inference
-    ): Either[String, (Context, Type)] = e match
-      case v @ EVar(x) =>
-        val phi = inferenceAlg.fresh()
-        Right(Map(v -> phi), phi)
+    def instantiate(t: Type)(using i: Inference): TBasic = t match
+      case TPoly(vars, a) =>
+        val s = Subst(vars.map(_ -> i.fresh).toMap)
+        s(a)
+      case t: TBasic => t
 
-      case EAbs(x, e) =>
-        val phi = inferenceAlg.fresh()
+    def generalise(context: Context, t: TBasic)(using i: Inference): TPoly =
+      val vars = t.fv diff context.values.collect { case phi: TVar =>
+        phi
+      }.toSet
+      TPoly(vars, t)
+    
+    def debugPrint(subst: Subst, t: TBasic): (Subst, TBasic) =
+      println(s"  subst $subst; type $t")
+      (subst, t)
 
-        ppHelper(e).map((pi, p) =>
-          if pi.contains(x) then
-            val a = pi(x)
-            (pi.removed(x), TArr(a, p))
-          else (pi, TArr(phi, p))
-        )
+    def algWHelper(context: Context, e: Expr)(using
+        i: Inference
+    ): Either[String, (Subst, TBasic)] =
+      e match
+        case x: EVar =>
+          if context.contains(x) then Right(Subst.id, instantiate(context(x)))
+          else Left(s"$x not bound in $context")
 
-      case EApp(e1, e2) =>
-        val phi = inferenceAlg.fresh()
+        case EAbs(x, e) =>
+          val phi = i.fresh
+          for
+            pp <- algWHelper(context ++ Map(x -> phi), e)
+            (s, a) = pp
+          yield (s, s(TArr(phi, a)))
 
-        for
-          pp1 <- ppHelper(e1)
-          pp2 <- ppHelper(e2)
-          (pi1, p1) = pp1
-          (pi2, p2) = pp2
+        case EApp(e1, e2) =>
+          val phi = i.fresh
+          for
+            pp1 <- algWHelper(context, e1)
+            (s1, a) = pp1
+            pp2 <- algWHelper(s1(context), e2)
+            (s2, b) = pp2
+            s3 <- unify(s2(a), TArr(b, phi))
+          yield (s3 compose s2 compose s1, s3(phi))
 
-          s1 <- unify(p1, TArr(p2, phi))
-          s2 <- unifyContexts(s1(pi1), s1(pi2))
-        yield (s2 compose s1)(pi1 ++ pi2, phi)
+        case EFix(g, e) =>
+          val phi = i.fresh
+          for
+            pp <- algWHelper(context ++ Map(g -> phi), e)
+            (s1, a) = pp
+            s2 <- unify(s1(phi), a)
+          yield (s2 compose s1, s2(a))
+
+        case ELet(x, e1, e2) =>
+          for
+            pp1 <- algWHelper(context, e1)
+            (s1, a) = pp1
+            sigma = generalise(s1(context), a)
+            pp2 <- algWHelper(s1(context ++ Map(x -> sigma)), e2)
+            (s2, b) = pp2
+          yield (s2 compose s1, b)
 
     given Inference = new Inference()
-    ppHelper(e)
+    algWHelper(context, e)
+
+  def infer(e: Expr): Either[String, TBasic] =
+    for
+      pp <- algW(Map.empty, e)
+      (s, a) = pp
+    yield s(a)
