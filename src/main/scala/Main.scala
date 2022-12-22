@@ -1,7 +1,7 @@
-import core._
-import core.TBasic._
-import core.Expr._
-import Inference._
+import core.*
+import core.BasicType.*
+import core.Expr.*
+import Inference.*
 
 @main def playground: Unit =
   val f: EVar = EVar("f")
@@ -57,7 +57,7 @@ import Inference._
   // testing new substitutions
   val p1: TVar = TVar(1)
   val p2 = TVar(2)
-  val tPoly: Type = TPoly(Set(p1), p1)
+  val tPoly: Type = PolyType(Set(p1), p1)
   val s = Subst(p1 -> p2)
   // println(s(p1))
   // println(s(tPoly))

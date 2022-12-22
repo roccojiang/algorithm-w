@@ -1,6 +1,6 @@
 package core
 
-import TBasic._
+import BasicType.*
 
 sealed trait Type:
   /** Checks if the given type variable is in the type. */
@@ -10,27 +10,30 @@ sealed trait Type:
   def fv: Set[TVar]
 
 /** Basic types. */
-enum TBasic extends Type:
+enum BasicType extends Type:
   case TVar(x: Int)
-  case TArr(a: TBasic, b: TBasic)
+  case TFun(a: BasicType, b: BasicType)
 
   override def occurs(phi: TVar): Boolean = this match
     case TVar(x)    => TVar(x) == phi
-    case TArr(a, b) => a.occurs(phi) || b.occurs(phi)
+    case TFun(a, b) => a.occurs(phi) || b.occurs(phi)
 
   override def fv: Set[TVar] = this match
     case phi: TVar  => Set(phi)
-    case TArr(a, b) => a.fv union b.fv
+    case TFun(a, b) => a.fv union b.fv
 
   override def toString: String = this match
     case TVar(x)  => s"φ$x"
-    case a TArr b => s"($a -> $b)"
+    case a TFun b => s"($a -> $b)"
 
 /** Polymorphic types. */
-case class TPoly(vars: Set[TVar], t: TBasic) extends Type:
-  override def fv: Set[TVar] = t.fv diff vars
+case class PolyType(vars: Set[TVar], a: BasicType) extends Type:
+  override def fv: Set[TVar] = a.fv diff vars
 
   override def occurs(phi: TVar): Boolean =
-    vars.contains(phi) || t.occurs(phi)
+    vars.contains(phi) || a.occurs(phi)
 
-  override def toString: String = s"(∀${vars.mkString}.$t)"
+  override def toString: String = s"(∀${vars.mkString}.$a)"
+
+object PolyType:
+  def apply(t: BasicType): PolyType = PolyType(Set.empty, t)
