@@ -10,8 +10,9 @@ type Context = Map[EVar, PolyType]
 case class Subst(subMap: Map[Type, BasicType]):
 
   def apply(t: BasicType): BasicType = t match
-    case phi: TVar => subMap.getOrElse(phi, phi)
-    case a TFun b  => TFun(apply(a), apply(b))
+    case phi: TVar  => subMap.getOrElse(phi, phi)
+    case TFun(a, b) => TFun(apply(a), apply(b))
+    case c: TConst  => c
 
   def apply(t: PolyType): PolyType =
     PolyType(t.vars, apply(t.a))

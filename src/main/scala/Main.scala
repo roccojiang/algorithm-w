@@ -1,6 +1,7 @@
 import core.*
 import core.BasicType.*
 import core.Expr.*
+import core.TermConst.*
 import Inference.*
 
 @main def playground: Unit =
@@ -33,16 +34,9 @@ import Inference.*
   val R = EFix(r, bar) // TODO: test violating barendregts?
   // println(s"$ii: ${infer(ii)}")
   println(s"$R: ${infer(R)}") // TODO: incorrect
-  // val baz = EAbs(b, EApp(b, K))
-  // println(s"$baz: ${infer(baz)}")
 
-  // val foo = TArr(TVar(4), TArr(TVar(5), TVar(4)))
-  // println {
-  //   for
-  //     pp <- algW(Map(b -> foo, a -> foo, r -> TArr(foo, TArr(foo, foo))), R)
-  //     (subst, typ) = pp
-  //   yield subst(typ)
-  // }
+  val baz = EAbs(x, EConst(CBool(true)))
+  println(s"$baz: ${infer(baz)}")
 
   // test pretty printing of expressions
   // println(ELet(EVar("foo"), EFix(f, Y), ELet(EVar("bar"), S, EFix(f, ELet(EVar("baz"), x, x)))))

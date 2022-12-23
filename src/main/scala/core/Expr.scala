@@ -1,7 +1,11 @@
 package core
 
+import BasicType.*
+import TypeConst.*
+
 enum Expr:
   case EVar(x: String)
+  case EConst(c: TermConst)
   case EAbs(x: EVar, e: Expr)
   case EApp(e1: Expr, e2: Expr)
   case ELet(x: EVar, e1: Expr, e2: Expr)
@@ -29,9 +33,27 @@ enum Expr:
       case e            => varStr(e)
 
     def varStr(e: Expr): String = e match
-      case EVar(x) => x
-      case e       => s"($e)"
+      case EVar(x)   => x
+      case EConst(c) => c.toString
+      case e         => s"($e)"
 
     this match
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
+
+enum TermConst:
+  case CInt(x: Int)
+  case CChar(c: Char)
+  case CBool(b: Boolean)
+
+  /** The function 'v', which maps each term constant to its (closed) type. */
+  // TODO: implicits?
+  def constType: PolyType = this match
+    case CInt(x)  => PolyType(TConst(TInt))
+    case CChar(c) => PolyType(TConst(TChar))
+    case CBool(b) => PolyType(TConst(TBool))
+
+  override def toString(): String = this match
+    case CInt(x)  => x.toString
+    case CChar(c) => s"'$c'"
+    case CBool(b) => b.toString

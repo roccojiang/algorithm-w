@@ -18,6 +18,8 @@ object Inference:
   def unify(t1: BasicType, t2: BasicType): Either[String, Subst] =
     (t1, t2) match
       case (phi @ TVar(x), TVar(y)) if x == y   => Right(Subst(phi -> phi))
+      case (TConst(c1), TConst(c2)) if c1 == c2 => Right(Subst.id)
+      // Below case covers the "unify phi c" case with TConst
       case (phi @ TVar(x), b) if !b.occurs(phi) => Right(Subst(phi -> b))
       case (a, phi @ TVar(x))                   => unify(phi, a)
       case (TFun(a, b), TFun(c, d)) =>
@@ -50,6 +52,8 @@ object Inference:
         case x: EVar =>
           if context.contains(x) then Right(Subst.id, instantiate(context(x)))
           else Left(s"$x not bound in $context")
+
+        case EConst(c) => Right(Subst.id, instantiate(c.constType))
 
         case EAbs(x, e) =>
           val phi = i.fresh
