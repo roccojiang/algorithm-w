@@ -11,8 +11,9 @@ enum Expr:
   case ELet(x: EVar, e1: Expr, e2: Expr)
   case EFix(g: EVar, e: Expr)
 
-  // TODO: make this less confusing, and reconsider redundant parenthesis rules
-  // on let and fix
+  // TODO: complete rework required:
+  // add spacing (very relevant for term constants)
+  // remove redundant parentheses on let and fix
   override def toString: String =
     // Abbreviates consecutive abstractions
     def absStr(e: Expr): String = e match
@@ -46,14 +47,34 @@ enum TermConst:
   case CChar(c: Char)
   case CBool(b: Boolean)
 
-  /** The function 'v', which maps each term constant to its (closed) type. */
-  // TODO: implicits?
-  def constType: PolyType = this match
-    case CInt(x)  => PolyType(TConst(TInt))
-    case CChar(c) => PolyType(TConst(TChar))
-    case CBool(b) => PolyType(TConst(TBool))
+  case CCond
+  case CEq
+  case CAdd
+  case CSub
 
+  /** The function 'v', which maps each term constant to its (closed) type. */
+  // TODO: implicits
+  def constType: PolyType =
+    val phi: TVar = TVar(0)
+
+    this match
+      case _: CInt  => PolyType(TConst(TInt))
+      case _: CChar => PolyType(TConst(TChar))
+      case _: CBool => PolyType(TConst(TBool))
+
+      case CCond => // ∀φ. Bool -> φ -> φ -> φ
+        PolyType(Set(phi), TFun(TConst(TBool), TFun(phi, TFun(phi, phi))))
+      case CEq => // ∀φ. φ -> φ -> Bool
+        PolyType(Set(phi), TFun(phi, TFun(phi, TConst(TBool))))
+      case CAdd | CSub => // Int -> Int -> Int
+        PolyType(TFun(TConst(TInt), TFun(TConst(TInt), TConst(TInt))))
+        
   override def toString(): String = this match
     case CInt(x)  => x.toString
     case CChar(c) => s"'$c'"
     case CBool(b) => b.toString
+
+    case CCond => "Cond"
+    case CEq => "Eq"
+    case CAdd => "Add"
+    case CSub => "Sub"
