@@ -53,3 +53,5 @@ enum TypeConst:
     case TInt  => "Int"
     case TChar => "Char"
     case TBool => "Bool"
+
+given Conversion[TypeConst, TConst] = TConst(_)

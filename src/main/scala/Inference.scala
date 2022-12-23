@@ -52,7 +52,7 @@ object Inference:
         case x: EVar =>
           if context.contains(x) then Right(Subst.id, instantiate(context(x)))
           else Left(s"$x not bound in $context")
-
+        
         case EConst(c) => Right(Subst.id, instantiate(c.constType))
 
         case EAbs(x, e) =>

@@ -1,5 +1,7 @@
 package core
 
+import scala.language.implicitConversions
+
 import BasicType.*
 import TypeConst.*
 
@@ -42,6 +44,8 @@ enum Expr:
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
 
+given Conversion[String, Expr.EVar] = Expr.EVar(_)
+
 enum TermConst:
   case CInt(x: Int)
   case CChar(c: Char)
@@ -53,28 +57,33 @@ enum TermConst:
   case CSub
 
   /** The function 'v', which maps each term constant to its (closed) type. */
-  // TODO: implicits
   def constType: PolyType =
     val phi: TVar = TVar(0)
 
     this match
-      case _: CInt  => PolyType(TConst(TInt))
-      case _: CChar => PolyType(TConst(TChar))
-      case _: CBool => PolyType(TConst(TBool))
+      case _: CInt  => PolyType(TInt)
+      case _: CChar => PolyType(TChar)
+      case _: CBool => PolyType(TBool)
 
       case CCond => // ∀φ. Bool -> φ -> φ -> φ
-        PolyType(Set(phi), TFun(TConst(TBool), TFun(phi, TFun(phi, phi))))
+        PolyType(Set(phi), TFun(TBool, TFun(phi, TFun(phi, phi))))
       case CEq => // ∀φ. φ -> φ -> Bool
-        PolyType(Set(phi), TFun(phi, TFun(phi, TConst(TBool))))
+        PolyType(Set(phi), TFun(phi, TFun(phi, TBool)))
       case CAdd | CSub => // Int -> Int -> Int
-        PolyType(TFun(TConst(TInt), TFun(TConst(TInt), TConst(TInt))))
-        
+        PolyType(TFun(TInt, TFun(TInt, TInt)))
+
   override def toString(): String = this match
     case CInt(x)  => x.toString
     case CChar(c) => s"'$c'"
     case CBool(b) => b.toString
 
     case CCond => "Cond"
-    case CEq => "Eq"
-    case CAdd => "Add"
-    case CSub => "Sub"
+    case CEq   => "Eq"
+    case CAdd  => "Add"
+    case CSub  => "Sub"
+
+given Conversion[TermConst, Expr.EConst] = Expr.EConst(_)
+
+given Conversion[Int, Expr.EConst] = TermConst.CInt(_)
+given Conversion[Char, Expr.EConst] = TermConst.CChar(_)
+given Conversion[Boolean, Expr.EConst] = TermConst.CBool(_)
