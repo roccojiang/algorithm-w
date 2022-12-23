@@ -13,15 +13,13 @@ enum Expr:
   case ELet(x: EVar, e1: Expr, e2: Expr)
   case EFix(g: EVar, e: Expr)
 
-  // TODO: complete rework required:
-  // add spacing (very relevant for term constants)
-  // remove redundant parentheses on let and fix
+  // TODO: remove redundant parentheses on let and fix
   override def toString: String =
     // Abbreviates consecutive abstractions
     def absStr(e: Expr): String = e match
       case EAbs(EVar(x), e @ EAbs(_, _)) => s"$x${absStr(e)}"
-      case EAbs(EVar(x), e)              => s"$x.$e"
-      case e                             => s".$e"
+      case EAbs(EVar(x), e)              => s"$x. $e"
+      case e                             => s". $e"
 
     def fixStr(e: Expr): String = e match
       case EFix(g, e) => s"fix $g. $e"
@@ -32,8 +30,8 @@ enum Expr:
       case e               => appStr(e)
 
     def appStr(e: Expr): String = e match
-      case EApp(e1, e2) => s"${appStr(e1)}${varStr(e2)}"
-      case e            => varStr(e)
+      case EApp(e1, e2)         => s"${appStr(e1)} ${varStr(e2)}"
+      case e                    => varStr(e)
 
     def varStr(e: Expr): String = e match
       case EVar(x)   => x

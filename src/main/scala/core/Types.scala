@@ -17,10 +17,10 @@ enum BasicType:
   case TFun(a: BasicType, b: BasicType)
   case TConst(c: TypeConst)
 
-  /** Checks if the given type variable is in the type. */
-  def occurs(phi: TVar): Boolean = this match
+  /** Checks if the given type variable occurs in the type. */
+  def contains(phi: TVar): Boolean = this match
     case TVar(x)    => TVar(x) == phi
-    case TFun(a, b) => a.occurs(phi) || b.occurs(phi)
+    case TFun(a, b) => a.contains(phi) || b.contains(phi)
     case c: TConst  => false
 
   override def toString: String = this match

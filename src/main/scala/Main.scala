@@ -2,8 +2,7 @@ package ml
 
 import scala.language.implicitConversions
 
-import core.{given, *}
-import core.BasicType.*
+import core.given
 import core.Expr.*
 import core.TermConst.*
 import Inference.*
@@ -27,7 +26,10 @@ import Inference.*
   val ii = ELet("i", I, EApp("i", "i"))
   println(s"$ii: ${infer(ii)}")
 
-  val R = EFix("r", EAbs("a", EAbs("b", EApp(EApp("r", EApp(EApp("r", "b"), K)), "a")))) // TODO: test violating barendregts?
+  val R = EFix(
+    "r",
+    EAbs("a", EAbs("b", EApp(EApp("r", EApp(EApp("r", "b"), K)), "a")))
+  ) // TODO: test violating barendregts?
   println(s"$R: ${infer(R)}")
 
   // fix "t". λnm. Cond (IsZero n) 0 (Add ("t" (MinusOne n) m) m)

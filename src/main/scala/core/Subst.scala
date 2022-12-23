@@ -2,6 +2,7 @@ package ml.core
 
 import scala.collection.immutable
 
+/** Type substitution, mapping type variables to (basic) types. */
 case class Subst(subst: Map[BasicType, BasicType]):
 
   def apply[T: Types](t: T) = t.subst(this)
