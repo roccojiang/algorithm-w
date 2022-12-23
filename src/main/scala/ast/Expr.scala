@@ -1,9 +1,10 @@
-package ml.core
+package ml.ast
 
 import scala.language.implicitConversions
 
-import BasicType.*
-import TypeConst.*
+import ml.inference.{PolyType, given}
+import ml.inference.BasicType.*
+import ml.inference.TypeConst.*
 
 enum Expr:
   case EVar(x: String)
@@ -30,8 +31,8 @@ enum Expr:
       case e               => appStr(e)
 
     def appStr(e: Expr): String = e match
-      case EApp(e1, e2)         => s"${appStr(e1)} ${varStr(e2)}"
-      case e                    => varStr(e)
+      case EApp(e1, e2) => s"${appStr(e1)} ${varStr(e2)}"
+      case e            => varStr(e)
 
     def varStr(e: Expr): String = e match
       case EVar(x)   => x

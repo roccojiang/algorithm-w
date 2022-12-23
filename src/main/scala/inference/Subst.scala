@@ -1,4 +1,4 @@
-package ml.core
+package ml.inference
 
 import scala.collection.immutable
 

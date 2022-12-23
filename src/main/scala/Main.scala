@@ -2,10 +2,10 @@ package ml
 
 import scala.language.implicitConversions
 
-import core.given
-import core.Expr.*
-import core.TermConst.*
-import Inference.*
+import ast.given
+import ast.Expr.*
+import ast.TermConst.*
+import inference.Inference.*
 
 @main def playground: Unit =
   val I = EAbs("x", "x")

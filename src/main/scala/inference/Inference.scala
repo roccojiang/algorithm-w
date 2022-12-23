@@ -1,8 +1,8 @@
-package ml
+package ml.inference
 
-import core.{given, *}
-import core.BasicType.*
-import core.Expr.*
+import BasicType.*
+import ml.ast.Expr
+import ml.ast.Expr.*
 
 /** A substitution-type pair returned by Algorithm W. The final inferred type is
   * obtained by applying the substitution to the type.
