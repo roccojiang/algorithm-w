@@ -1,4 +1,6 @@
-import core.*
+package ml
+
+import core.{given, *}
 import core.BasicType.*
 import core.Expr.*
 
@@ -10,17 +12,17 @@ type WPair = (Subst, BasicType)
 class Inference:
   private var n: Int = 0
 
-  def fresh: TVar =
+  def fresh =
     n += 1
     TVar(n)
 
 object Inference:
   def unify(t1: BasicType, t2: BasicType): Either[String, Subst] =
     (t1, t2) match
-      case (phi @ TVar(x), TVar(y)) if x == y   => Right(Subst(phi -> phi))
+      case (phi @ TVar(x), TVar(y)) if x == y   => Right(phi -> phi)
       case (TConst(c1), TConst(c2)) if c1 == c2 => Right(Subst.id)
       // Below case covers the "unify phi c" case with TConst
-      case (phi @ TVar(x), b) if !b.occurs(phi) => Right(Subst(phi -> b))
+      case (phi @ TVar(x), b) if !b.occurs(phi) => Right(phi -> b)
       case (a, phi @ TVar(x))                   => unify(phi, a)
       case (TFun(a, b), TFun(c, d)) =>
         for
@@ -38,7 +40,7 @@ object Inference:
     def generalise(context: Context, t: BasicType)(using
         i: Inference
     ): PolyType =
-      val vars = t.fv diff context.values.flatMap(_.fv).toSet
+      val vars = t.fv diff context.fv
       PolyType(vars, t)
 
     def debugPrint(subst: Subst, t: BasicType): WPair =

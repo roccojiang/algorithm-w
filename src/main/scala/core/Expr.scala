@@ -1,4 +1,4 @@
-package core
+package ml.core
 
 import scala.language.implicitConversions
 
