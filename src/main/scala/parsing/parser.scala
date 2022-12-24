@@ -13,5 +13,7 @@ object parser:
   private lazy val nonAppExpr: Parsley[Expr] =
     variable
       <|> EAbs("\\" ~> variable, "." ~> expr)
+      <|> ELet("let" ~> variable, "=" ~> expr, "in" ~> expr)
+      <|> EFix("fix" ~> variable, "." ~> expr)
       <|> parens(expr)
   lazy val expr: Parsley[Expr] = chain.left1(nonAppExpr, pure(EApp.apply))
