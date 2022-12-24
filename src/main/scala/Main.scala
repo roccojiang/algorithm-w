@@ -44,4 +44,5 @@ import parsing.parser.*
   println(s"$times: ${infer(times)}")
   */
 
-  println(expr.parse("(\\x.x)(\\x.x)"))
+  println(expr.parse("(\\x.\\y.\\z.x z (y z))(\\a. \\b. a)"))
+  println(expr.parse("(\\u.\\v.u v) (\\c.c) (\\y.\\z.z)"))

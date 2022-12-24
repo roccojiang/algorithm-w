@@ -1,7 +1,7 @@
 package parsing
 
 import parsley.Parsley
-import parsley.token.descriptions.{LexicalDesc, NameDesc}
+import parsley.token.descriptions.{LexicalDesc, NameDesc, SymbolDesc}
 import parsley.token.{Lexer, predicate}
 
 object lexer:
@@ -9,6 +9,9 @@ object lexer:
     nameDesc = NameDesc.plain.copy(
       identifierStart = predicate.Basic(_.isLetter),
       identifierLetter = predicate.Basic(_.isLetter)
+    ),
+    symbolDesc = SymbolDesc.plain.copy(
+      hardKeywords = Set("let", "in", "fix")
     )
   )
 
@@ -16,4 +19,6 @@ object lexer:
 
   val VAR = lexer.lexeme.names.identifier
 
-  def parens[A](p: =>Parsley[A]): Parsley[A] = lexer.lexeme.enclosing.parens(p)
+  val implicits = lexer.lexeme.symbol.implicits
+
+  def parens[A](p: => Parsley[A]): Parsley[A] = lexer.lexeme.enclosing.parens(p)
