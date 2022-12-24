@@ -6,8 +6,10 @@ import ast.given
 import ast.Expr.*
 import ast.TermConst.*
 import inference.Inference.*
+import parsing.parser.*
 
-@main def playground: Unit =
+@main def playground(): Unit =
+  /*
   val I = EAbs("x", "x")
   val K = EAbs("x", EAbs("y", "x"))
   val S = EAbs("x", EAbs("y", EAbs("z", EApp(EApp("x", "z"), EApp("y", "z")))))
@@ -40,3 +42,6 @@ import inference.Inference.*
   val conditional = EApp(EApp(EApp(CCond, nIsZero), 0), addMOnce)
   val times = EFix("t", EAbs("n", EAbs("m", conditional)))
   println(s"$times: ${infer(times)}")
+  */
+
+  println(expr.parse("(\\x.x)(\\x.x)"))

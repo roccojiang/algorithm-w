@@ -26,7 +26,7 @@ enum BasicType:
   override def toString: String = this match
     case TVar(x)    => s"φ$x"
     case TFun(a, b) => s"($a -> $b)"
-    case TConst(c)  => c.toString
+    case TConst(c)  => c.toString()
 
 given Types[BasicType] with
   extension (t: BasicType)
@@ -66,7 +66,7 @@ enum TypeConst:
   case TChar
   case TBool
 
-  override def toString(): String = this match
+  override def toString: String = this match
     case TInt  => "Int"
     case TChar => "Char"
     case TBool => "Bool"

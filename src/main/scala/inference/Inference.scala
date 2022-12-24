@@ -15,7 +15,7 @@ type Result[T] = Either[String, T]
 class Inference:
   private var n: Int = 0
 
-  def fresh =
+  def fresh: BasicType =
     n += 1
     TVar(n)
 

@@ -2,6 +2,8 @@ package ml.ast
 
 import scala.language.implicitConversions
 
+import parsley.Parsley
+
 import ml.inference.{PolyType, given}
 import ml.inference.BasicType.*
 import ml.inference.TypeConst.*
@@ -14,12 +16,13 @@ enum Expr:
   case ELet(x: EVar, e1: Expr, e2: Expr)
   case EFix(g: EVar, e: Expr)
 
+  /*
   // TODO: remove redundant parentheses on let and fix
   override def toString: String =
     // Abbreviates consecutive abstractions
     def absStr(e: Expr): String = e match
-      case EAbs(EVar(x), e @ EAbs(_, _)) => s"$x${absStr(e)}"
-      case EAbs(EVar(x), e)              => s"$x. $e"
+      case EAbs(EVar(x), e @ EAbs(_, _)) => s" $x${absStr(e)}"
+      case EAbs(EVar(x), e)              => s" $x. $e"
       case e                             => s". $e"
 
     def fixStr(e: Expr): String = e match
@@ -42,6 +45,13 @@ enum Expr:
     this match
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
+   */
+
+// TODO: can reduce boilerplate?
+object Expr:
+  extension (e: EVar.type) def apply(p: Parsley[String]): Parsley[EVar] = p.map(EVar(_))
+  extension (e: EAbs.type) def apply(p: Parsley[(EVar, Expr)]): Parsley[EAbs] = p.map((x, e) => EAbs(x, e))
+  extension (e: EApp.type) def apply(p: Parsley[(Expr, Expr)]): Parsley[EApp] = p.map((e1, e2) => EApp(e1, e2))
 
 given Conversion[String, Expr.EVar] = Expr.EVar(_)
 
@@ -71,7 +81,7 @@ enum TermConst:
       case CAdd | CSub => // Int -> Int -> Int
         PolyType(TFun(TInt, TFun(TInt, TInt)))
 
-  override def toString(): String = this match
+  override def toString: String = this match
     case CInt(x)  => x.toString
     case CChar(c) => s"'$c'"
     case CBool(b) => b.toString
