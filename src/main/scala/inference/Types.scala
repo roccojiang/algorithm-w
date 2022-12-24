@@ -1,7 +1,7 @@
 package ml.inference
 
 import BasicType.*
-import ml.ast.Expr
+import ml.ast.*
 
 /** Typeclass expressing common behaviour between types and type contexts. */
 trait Types[T]:
@@ -53,7 +53,7 @@ given Types[PolyType] with
     def subst(s: Subst) = PolyType(t.vars, s(t.a))
 
 /** Type contexts, mapping term variables to their (polymorphic) types. */
-type Context = Map[Expr.EVar, PolyType]
+type Context = Map[EVar, PolyType]
 
 given Types[Context] with
   extension (c: Context)

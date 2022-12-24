@@ -3,20 +3,13 @@ package ml.ast
 import scala.language.implicitConversions
 
 import parsley.Parsley
+import parsley.genericbridges.*
 
 import ml.inference.{PolyType, given}
 import ml.inference.BasicType.*
 import ml.inference.TypeConst.*
 
-enum Expr:
-  case EVar(x: String)
-  case EConst(c: TermConst)
-  case EAbs(x: EVar, e: Expr)
-  case EApp(e1: Expr, e2: Expr)
-  case ELet(x: EVar, e1: Expr, e2: Expr)
-  case EFix(g: EVar, e: Expr)
-
-  /*
+sealed trait Expr:
   // TODO: remove redundant parentheses on let and fix
   override def toString: String =
     // Abbreviates consecutive abstractions
@@ -45,15 +38,22 @@ enum Expr:
     this match
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
-   */
+  
+case class EVar(x: String) extends Expr
+case class EConst(c: TermConst) extends Expr
+case class EAbs(x: EVar, e: Expr) extends Expr
+case class EApp(e1: Expr, e2: Expr) extends Expr
+case class ELet(x: EVar, e1: Expr, e2: Expr) extends Expr
+case class EFix(g: EVar, e: Expr) extends Expr
 
-// TODO: can reduce boilerplate?
-object Expr:
-  extension (e: EVar.type) def apply(p: Parsley[String]): Parsley[EVar] = p.map(EVar(_))
-  extension (e: EAbs.type) def apply(p: Parsley[(EVar, Expr)]): Parsley[EAbs] = p.map((x, e) => EAbs(x, e))
-  extension (e: EApp.type) def apply(p: Parsley[(Expr, Expr)]): Parsley[EApp] = p.map((e1, e2) => EApp(e1, e2))
+object EVar extends ParserBridge1[String, EVar]
+object EConst extends ParserBridge1[TermConst, EConst]
+object EAbs extends ParserBridge2[EVar, Expr, EAbs]
+object EApp extends ParserBridge2[Expr, Expr, EApp]
+object ELet extends ParserBridge3[EVar, Expr, Expr, ELet]
+object EFix extends ParserBridge2[EVar, Expr, EFix]
 
-given Conversion[String, Expr.EVar] = Expr.EVar(_)
+given Conversion[String, EVar] = EVar(_)
 
 enum TermConst:
   case CInt(x: Int)
@@ -91,8 +91,8 @@ enum TermConst:
     case CAdd  => "Add"
     case CSub  => "Sub"
 
-given Conversion[TermConst, Expr.EConst] = Expr.EConst(_)
+given Conversion[TermConst, EConst] = EConst(_)
 
-given Conversion[Int, Expr.EConst] = TermConst.CInt(_)
-given Conversion[Char, Expr.EConst] = TermConst.CChar(_)
-given Conversion[Boolean, Expr.EConst] = TermConst.CBool(_)
+given Conversion[Int, EConst] = TermConst.CInt(_)
+given Conversion[Char, EConst] = TermConst.CChar(_)
+given Conversion[Boolean, EConst] = TermConst.CBool(_)

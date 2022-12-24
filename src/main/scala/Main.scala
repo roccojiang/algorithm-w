@@ -2,8 +2,7 @@ package ml
 
 import scala.language.implicitConversions
 
-import ast.given
-import ast.Expr.*
+import ast.{given, *}
 import ast.TermConst.*
 import inference.Inference.*
 import parsing.parser.*
