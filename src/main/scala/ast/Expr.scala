@@ -38,7 +38,7 @@ sealed trait Expr:
     this match
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
-  
+
 case class EVar(x: String) extends Expr
 case class EConst(c: TermConst) extends Expr
 case class EAbs(x: EVar, e: Expr) extends Expr
@@ -55,16 +55,7 @@ object EFix extends ParserBridge2[EVar, Expr, EFix]
 
 given Conversion[String, EVar] = EVar(_)
 
-enum TermConst:
-  case CInt(x: Int)
-  case CChar(c: Char)
-  case CBool(b: Boolean)
-
-  case CCond
-  case CEq
-  case CAdd
-  case CSub
-
+sealed trait TermConst:
   /** The function 'v', which maps each term constant to its (closed) type. */
   def constType: PolyType =
     val phi: TVar = TVar(0)
@@ -84,15 +75,34 @@ enum TermConst:
   override def toString: String = this match
     case CInt(x)  => x.toString
     case CChar(c) => s"'$c'"
-    case CBool(b) => b.toString
+    case CBool(b) => if b then "True" else "False"
 
-    case CCond => "Cond"
-    case CEq   => "Eq"
-    case CAdd  => "Add"
-    case CSub  => "Sub"
+    case c => TermConst.constStrs(c)
+
+object TermConst:
+  val constIds: Map[String, TermConst] = Map(
+    "Cond" -> CCond,
+    "Eq" -> CEq,
+    "Add" -> CAdd,
+    "Sub" -> CSub
+  )
+
+  private val constStrs = constIds.map(_.swap)
+
+case object CCond extends TermConst
+case object CEq extends TermConst
+case object CAdd extends TermConst
+case object CSub extends TermConst
+
+case class CInt(x: BigInt) extends TermConst
+case class CChar(c: Char) extends TermConst
+case class CBool(b: Boolean) extends TermConst
+object CInt extends ParserBridge1[BigInt, CInt]
+object CChar extends ParserBridge1[Char, CChar]
+object CBool extends ParserBridge1[Boolean, CBool]
 
 given Conversion[TermConst, EConst] = EConst(_)
 
-given Conversion[Int, EConst] = TermConst.CInt(_)
-given Conversion[Char, EConst] = TermConst.CChar(_)
-given Conversion[Boolean, EConst] = TermConst.CBool(_)
+given Conversion[Int, EConst] = CInt(_)
+given Conversion[Char, EConst] = CChar(_)
+given Conversion[Boolean, EConst] = CBool(_)

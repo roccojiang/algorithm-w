@@ -4,16 +4,21 @@ import parsley.Parsley
 import parsley.Parsley.pure
 import parsley.expr.chain
 
-import lexer.{parens, VAR}
+import lexer.*
 import lexer.implicits.implicitSymbol
 import ml.ast.*
 
 object parser:
-  private val variable: Parsley[EVar] = EVar(VAR)
-  private lazy val nonAppExpr: Parsley[Expr] =
+  private val variable = EVar(VAR)
+  private val constExpr = EConst(
+    CInt(INT) <|> CChar(CHAR) <|> CBool(BOOL) <|> CONST
+  )
+  private lazy val exprAtom =
     variable
       <|> EAbs("\\" ~> variable, "." ~> expr)
       <|> ELet("let" ~> variable, "=" ~> expr, "in" ~> expr)
       <|> EFix("fix" ~> variable, "." ~> expr)
+      <|> constExpr
       <|> parens(expr)
-  lazy val expr: Parsley[Expr] = chain.left1(nonAppExpr, pure(EApp.apply))
+
+  lazy val expr: Parsley[Expr] = chain.left1(exprAtom, pure(EApp.apply))

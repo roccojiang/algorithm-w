@@ -3,7 +3,6 @@ package ml
 import scala.language.implicitConversions
 
 import ast.{given, *}
-import ast.TermConst.*
 import inference.Inference.*
 import parsing.parser.*
 
@@ -32,7 +31,7 @@ import parsing.parser.*
   ) // TODO: test violating barendregts?
   // println(s"$R: ${infer(R)}")
 
-  // fix t. λnm. Cond (IsZero n) 0 (Add ("t" (MinusOne n) m) m)
+  // fix t. λnm. Cond (IsZero n) 0 (Add (t (MinusOne n) m) m)
   val nIsZero = EApp(EApp(CEq, "n"), 0)
   val nMinusOne = EApp(EApp(CSub, "n"), 1)
   val tNMinusOneM = EApp(EApp("t", nMinusOne), "m")
@@ -48,3 +47,8 @@ import parsing.parser.*
   val rParsed = expr.parse("fix r. \\a.\\b.r(r b(\\x.\\y.x))a")
   assert(rParsed.get == R)
   println(s"${rParsed.get}: ${infer(rParsed.get)}")
+
+  val timesParsed =
+    expr.parse("fix t. \\n.\\m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)")
+  assert(timesParsed.get == times)
+  println(s"${timesParsed.get}: ${infer(timesParsed.get)}")
