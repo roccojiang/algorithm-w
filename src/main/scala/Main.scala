@@ -40,15 +40,15 @@ import parsing.parser.*
   val times = EFix("t", EAbs("n", EAbs("m", conditional)))
   // println(s"$times: ${infer(times)}")
 
-  println(expr.parse("(\\x.\\y.\\z.x z (y z))(\\a. \\b. a)"))
-  println(expr.parse("(\\u.\\v.u v) (\\c.c) (\\y.\\z.z)"))
+  println(expr.parse("(\\x y z.x z (y z))(\\a. \\b. a)"))
+  println(expr.parse("(\\u v.u v) (\\c.c) (\\y.\\z.z)"))
   println(expr.parse("a b c"))
   println(expr.parse("let i = \\x.x in i i"))
-  val rParsed = expr.parse("fix r. \\a.\\b.r(r b(\\x.\\y.x))a")
+  val rParsed = expr.parse("fix r. \\a b.r(r b(\\x y.x))a")
   assert(rParsed.get == R)
   println(s"${rParsed.get}: ${infer(rParsed.get)}")
 
   val timesParsed =
-    expr.parse("fix t. \\n.\\m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)")
+    expr.parse("fix t. \\n m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)")
   assert(timesParsed.get == times)
   println(s"${timesParsed.get}: ${infer(timesParsed.get)}")

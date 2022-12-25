@@ -2,6 +2,7 @@ package parsing
 
 import parsley.Parsley
 import parsley.Parsley.pure
+import parsley.combinator.some
 import parsley.expr.chain
 
 import lexer.*
@@ -15,7 +16,7 @@ object parser:
   )
   private lazy val exprAtom =
     variable
-      <|> EAbs("\\" ~> variable, "." ~> expr)
+      <|> EAbs("\\" ~> some(variable), "." ~> expr)
       <|> ELet("let" ~> variable, "=" ~> expr, "in" ~> expr)
       <|> EFix("fix" ~> variable, "." ~> expr)
       <|> constExpr

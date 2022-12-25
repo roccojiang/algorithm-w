@@ -3,6 +3,7 @@ package ml.ast
 import scala.language.implicitConversions
 
 import parsley.Parsley
+import parsley.implicits.zipped.Zipped2
 import parsley.genericbridges.*
 
 import ml.inference.{PolyType, given}
@@ -48,7 +49,9 @@ case class EFix(g: EVar, e: Expr) extends Expr
 
 object EVar extends ParserBridge1[String, EVar]
 object EConst extends ParserBridge1[TermConst, EConst]
-object EAbs extends ParserBridge2[EVar, Expr, EAbs]
+object EAbs extends ParserBridge2[EVar, Expr, EAbs]:
+  def apply(xs: Parsley[List[EVar]], e: Parsley[Expr]): Parsley[Expr] =
+    (xs, e).zipped(_.foldRight(_)(this.apply))
 object EApp extends ParserBridge2[Expr, Expr, EApp]
 object ELet extends ParserBridge3[EVar, Expr, Expr, ELet]
 object EFix extends ParserBridge2[EVar, Expr, EFix]
