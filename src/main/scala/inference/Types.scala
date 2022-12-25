@@ -1,7 +1,7 @@
 package ml.inference
 
 import BasicType.*
-import ml.ast.Expr
+import ml.ast.*
 
 /** Typeclass expressing common behaviour between types and type contexts. */
 trait Types[T]:
@@ -26,7 +26,7 @@ enum BasicType:
   override def toString: String = this match
     case TVar(x)    => s"φ$x"
     case TFun(a, b) => s"($a -> $b)"
-    case TConst(c)  => c.toString
+    case TConst(c)  => c.toString()
 
 given Types[BasicType] with
   extension (t: BasicType)
@@ -53,7 +53,7 @@ given Types[PolyType] with
     def subst(s: Subst) = PolyType(t.vars, s(t.a))
 
 /** Type contexts, mapping term variables to their (polymorphic) types. */
-type Context = Map[Expr.EVar, PolyType]
+type Context = Map[EVar, PolyType]
 
 given Types[Context] with
   extension (c: Context)
@@ -66,7 +66,7 @@ enum TypeConst:
   case TChar
   case TBool
 
-  override def toString(): String = this match
+  override def toString: String = this match
     case TInt  => "Int"
     case TChar => "Char"
     case TBool => "Bool"

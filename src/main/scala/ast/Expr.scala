@@ -2,24 +2,21 @@ package ml.ast
 
 import scala.language.implicitConversions
 
+import parsley.Parsley
+import parsley.implicits.zipped.Zipped2
+import parsley.genericbridges.*
+
 import ml.inference.{PolyType, given}
 import ml.inference.BasicType.*
 import ml.inference.TypeConst.*
 
-enum Expr:
-  case EVar(x: String)
-  case EConst(c: TermConst)
-  case EAbs(x: EVar, e: Expr)
-  case EApp(e1: Expr, e2: Expr)
-  case ELet(x: EVar, e1: Expr, e2: Expr)
-  case EFix(g: EVar, e: Expr)
-
+sealed trait Expr:
   // TODO: remove redundant parentheses on let and fix
   override def toString: String =
     // Abbreviates consecutive abstractions
     def absStr(e: Expr): String = e match
-      case EAbs(EVar(x), e @ EAbs(_, _)) => s"$x${absStr(e)}"
-      case EAbs(EVar(x), e)              => s"$x. $e"
+      case EAbs(EVar(x), e @ EAbs(_, _)) => s" $x${absStr(e)}"
+      case EAbs(EVar(x), e)              => s" $x. $e"
       case e                             => s". $e"
 
     def fixStr(e: Expr): String = e match
@@ -43,18 +40,25 @@ enum Expr:
       case EAbs(EVar(x), e) => s"λ$x${absStr(e)}"
       case e                => fixStr(e)
 
-given Conversion[String, Expr.EVar] = Expr.EVar(_)
+case class EVar(x: String) extends Expr
+case class EConst(c: TermConst) extends Expr
+case class EAbs(x: EVar, e: Expr) extends Expr
+case class EApp(e1: Expr, e2: Expr) extends Expr
+case class ELet(x: EVar, e1: Expr, e2: Expr) extends Expr
+case class EFix(g: EVar, e: Expr) extends Expr
 
-enum TermConst:
-  case CInt(x: Int)
-  case CChar(c: Char)
-  case CBool(b: Boolean)
+object EVar extends ParserBridge1[String, EVar]
+object EConst extends ParserBridge1[TermConst, EConst]
+object EAbs extends ParserBridge2[EVar, Expr, EAbs]:
+  def apply(xs: Parsley[List[EVar]], e: Parsley[Expr]): Parsley[Expr] =
+    (xs, e).zipped(_.foldRight(_)(this.apply))
+object EApp extends ParserBridge2[Expr, Expr, EApp]
+object ELet extends ParserBridge3[EVar, Expr, Expr, ELet]
+object EFix extends ParserBridge2[EVar, Expr, EFix]
 
-  case CCond
-  case CEq
-  case CAdd
-  case CSub
+given Conversion[String, EVar] = EVar(_)
 
+sealed trait TermConst:
   /** The function 'v', which maps each term constant to its (closed) type. */
   def constType: PolyType =
     val phi: TVar = TVar(0)
@@ -71,18 +75,37 @@ enum TermConst:
       case CAdd | CSub => // Int -> Int -> Int
         PolyType(TFun(TInt, TFun(TInt, TInt)))
 
-  override def toString(): String = this match
+  override def toString: String = this match
     case CInt(x)  => x.toString
     case CChar(c) => s"'$c'"
-    case CBool(b) => b.toString
+    case CBool(b) => if b then "True" else "False"
 
-    case CCond => "Cond"
-    case CEq   => "Eq"
-    case CAdd  => "Add"
-    case CSub  => "Sub"
+    case c => TermConst.constStrs(c)
 
-given Conversion[TermConst, Expr.EConst] = Expr.EConst(_)
+object TermConst:
+  val constIds: Map[String, TermConst] = Map(
+    "Cond" -> CCond,
+    "Eq" -> CEq,
+    "Add" -> CAdd,
+    "Sub" -> CSub
+  )
 
-given Conversion[Int, Expr.EConst] = TermConst.CInt(_)
-given Conversion[Char, Expr.EConst] = TermConst.CChar(_)
-given Conversion[Boolean, Expr.EConst] = TermConst.CBool(_)
+  private val constStrs = constIds.map(_.swap)
+
+case object CCond extends TermConst
+case object CEq extends TermConst
+case object CAdd extends TermConst
+case object CSub extends TermConst
+
+case class CInt(x: BigInt) extends TermConst
+case class CChar(c: Char) extends TermConst
+case class CBool(b: Boolean) extends TermConst
+object CInt extends ParserBridge1[BigInt, CInt]
+object CChar extends ParserBridge1[Char, CChar]
+object CBool extends ParserBridge1[Boolean, CBool]
+
+given Conversion[TermConst, EConst] = EConst(_)
+
+given Conversion[Int, EConst] = CInt(_)
+given Conversion[Char, EConst] = CChar(_)
+given Conversion[Boolean, EConst] = CBool(_)

@@ -9,8 +9,11 @@ lazy val root = project
     scalaVersion := scala3Version,
     scalacOptions ++= Seq(
       "-new-syntax",
-      "-source", "future", // allow tuple destructuring in for-comprehensions
+      "-source", "future" // allow tuple destructuring in for-comprehensions
     ),
 
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "munit" % "0.7.29" % Test,
+      "com.github.j-mie6" %% "parsley" % "4.0.1"
+    )
   )

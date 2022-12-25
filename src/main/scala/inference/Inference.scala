@@ -1,8 +1,7 @@
 package ml.inference
 
 import BasicType.*
-import ml.ast.Expr
-import ml.ast.Expr.*
+import ml.ast.*
 
 /** A substitution-type pair returned by Algorithm W. The final inferred type is
   * obtained by applying the substitution to the type.
@@ -15,7 +14,7 @@ type Result[T] = Either[String, T]
 class Inference:
   private var n: Int = 0
 
-  def fresh =
+  def fresh: BasicType =
     n += 1
     TVar(n)
 
