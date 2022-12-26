@@ -8,8 +8,9 @@ import ml.ast.*
   */
 type WPair = (Subst, BasicType)
 
-/** Errors are encoded as strings (for now). */
+// /** Errors are encoded as strings (for now). */
 type Result[T] = Either[String, T]
+type MLResult = Result[BasicType]
 
 class Inference:
   private var n: Int = 0
@@ -90,6 +91,6 @@ object Inference:
     given Inference = new Inference() // new set of fresh variables
     run(context, e)
 
-  def infer(e: Expr): Result[BasicType] =
+  def infer(e: Expr): MLResult =
     for (s, a) <- algW(Map.empty, e)
     yield s(a)

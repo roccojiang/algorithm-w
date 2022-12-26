@@ -1,12 +1,30 @@
 package ml
 
+import scala.io.StdIn.readLine
 import scala.language.implicitConversions
 
 import ast.{given, *}
+import inference.MLResult
 import inference.Inference.*
 import parsing.parser.*
 
-@main def playground(): Unit =
+def typeCheck(input: String): MLResult =
+  expr.parse(input).toEither.flatMap(infer(_))
+
+@main def repl(): Unit =
+  while true do
+    val input = readLine("> ")
+
+    if input == "exit" then return
+    else
+      val expression = expr.parse(input)
+      val exprType = expression.toEither.flatMap(infer(_))
+
+      exprType match
+        case Left(err) => println(err)
+        case Right(t)  => println(s"${expression.get}: $t")
+
+def playground(): Unit =
   val I = EAbs("x", "x")
   val K = EAbs("x", EAbs("y", "x"))
   val S = EAbs("x", EAbs("y", EAbs("z", EApp(EApp("x", "z"), EApp("y", "z")))))
@@ -44,11 +62,15 @@ import parsing.parser.*
   println(expr.parse("(\\u v.u v) (\\c.c) (\\y.\\z.z)"))
   println(expr.parse("a b c"))
   println(expr.parse("let i = \\x.x in i i"))
-  val rParsed = expr.parse("fix r. \\a b.r(r b(\\x y.x))a")
-  assert(rParsed.get == R)
-  println(s"${rParsed.get}: ${infer(rParsed.get)}")
+  val rStr = "fix r. \\a b.r(r b(\\x y.x))a"
+  val rParsed = expr.parse(rStr).get
+  assert(rParsed == R)
+  println(s"$rParsed: ${typeCheck(rStr)}")
 
-  val timesParsed =
-    expr.parse("fix t. \\n m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)")
-  assert(timesParsed.get == times)
-  println(s"${timesParsed.get}: ${infer(timesParsed.get)}")
+  val tStr = "fix t. \\n m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)"
+  val tParsed = expr.parse(tStr).get
+  assert(tParsed == times)
+  println(s"$tParsed: ${typeCheck(tStr)}")
+
+  val fail = expr.parse("\\x")
+  println(fail)
