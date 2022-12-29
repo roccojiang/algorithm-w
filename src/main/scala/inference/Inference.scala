@@ -1,15 +1,19 @@
 package ml.inference
 
+import scala.language.implicitConversions
+
 import BasicType.*
 import ml.ast.*
+import ml.error.TypeError
+import ml.error.given
 
 /** A substitution-type pair returned by Algorithm W. The final inferred type is
   * obtained by applying the substitution to the type.
   */
 type WPair = (Subst, BasicType)
 
-// /** Errors are encoded as strings (for now). */
-type Result[T] = Either[String, T]
+/** Errors are encoded as strings (for now). */
+type Result[T] = Either[TypeError, T]
 type MLResult = Result[BasicType]
 
 class Inference:
@@ -57,7 +61,7 @@ object Inference:
     def run(c: Context, e: Expr)(using i: Inference): Result[WPair] = e match
       case x: EVar =>
         if c.contains(x) then Right(Subst.id, instantiate(c(x)))
-        else Left(s"$x not bound in $c")
+        else Left(s"$x not bound in context $c")
 
       case EConst(c) => Right(Subst.id, instantiate(c.constType))
 

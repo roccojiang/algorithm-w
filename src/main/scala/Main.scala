@@ -1,28 +1,38 @@
 package ml
 
+import scala.io.AnsiColor.*
 import scala.io.StdIn.readLine
 import scala.language.implicitConversions
 
+import parsley.Result
+import parsley.errors.ErrorBuilder
+
 import ast.{given, *}
-import inference.MLResult
+import error.{MLError, TypeError, SyntaxError, SyntaxErrorBuilder}
+import inference.{BasicType, MLResult}
 import inference.Inference.*
 import parsing.parser.*
 
-def typeCheck(input: String): MLResult =
-  expr.parse(input).toEither.flatMap(infer(_))
-
 @main def repl(): Unit =
+  given ErrorBuilder[SyntaxError] = new SyntaxErrorBuilder()
+
   while true do
-    val input = readLine("> ")
+    val input = readLine(s"${BOLD}> ${RESET}")
 
     if input == "exit" then return
     else
-      val expression = expr.parse(input)
-      val exprType = expression.toEither.flatMap(infer(_))
+      val expression: Result[SyntaxError, Expr] = expr.parse(input)
+      val exprType: Either[MLError, BasicType] =
+        expression.toEither.flatMap(infer(_))
 
       exprType match
-        case Left(err) => println(err)
-        case Right(t)  => println(s"${expression.get}: $t")
+        case Left(err: SyntaxError) =>
+          println(s"${BOLD}${RED}Syntax Error: ${RESET}$err")
+        case Left(err: TypeError) =>
+          println(
+            s"${BOLD}${YELLOW}Type Error: ${RESET}\n${expression.get}: $err\n"
+          )
+        case Right(t) => println(s"${expression.get}: $t")
 
 def playground(): Unit =
   val I = EAbs("x", "x")
@@ -65,12 +75,12 @@ def playground(): Unit =
   val rStr = "fix r. \\a b.r(r b(\\x y.x))a"
   val rParsed = expr.parse(rStr).get
   assert(rParsed == R)
-  println(s"$rParsed: ${typeCheck(rStr)}")
+  println(s"$rParsed: ${infer(rParsed)}")
 
   val tStr = "fix t. \\n m. Cond (Eq n 0) 0 (Add (t (Sub n 1) m) m)"
   val tParsed = expr.parse(tStr).get
   assert(tParsed == times)
-  println(s"$tParsed: ${typeCheck(tStr)}")
+  println(s"$tParsed: ${infer(tParsed)}")
 
   val fail = expr.parse("\\x")
   println(fail)
